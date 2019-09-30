@@ -1,0 +1,50 @@
+{
+  "name": "@jswf/redux-module-sample",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "npx webpack-dev-server",
+    "build": "npx webpack --mode production",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@jswf/react": "file:../@jswf/react",
+    "@types/styled-components": "^4.1.19",
+    "react-dom": "^16.10.1",
+    "resize-observer-polyfill": "^1.5.1",
+    "styled-components": "^4.4.0"
+  },
+  "devDependencies": {
+    "@jswf/redux-module": "0.0.7",
+    "@types/react": "^16.9.3",
+    "@types/react-dom": "^16.9.1",
+    "@types/react-redux": "^7.1.4",
+    "@types/redux": "^3.6.0",
+    "@types/redux-logger": "^3.0.7",
+    "core-js": "^3.2.1",
+    "css-loader": "^3.2.0",
+    "dts-bundle": "^0.7.3",
+    "html-webpack-plugin": "^3.2.0",
+    "node-sass": "^4.12.0",
+    "react": "^16.10.1",
+    "react-redux": "^7.1.1",
+    "redux": "^4.0.4",
+    "redux-logger": "^3.0.6",
+    "sass-loader": "^8.0.0",
+    "source-map-loader": "^0.2.4",
+    "style-loader": "^1.0.0",
+    "ts-loader": "^6.2.0",
+    "tslint": "^5.20.0",
+    "tslint-config-airbnb": "^5.11.2",
+    "tslint-loader": "^3.5.4",
+    "typescript": "^3.6.3",
+    "url-loader": "^2.1.0",
+    "webpack": "^4.41.0",
+    "webpack-cli": "^3.3.9",
+    "webpack-dev-server": "^3.8.1"
+  }
+}
