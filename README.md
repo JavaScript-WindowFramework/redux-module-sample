@@ -1,9 +1,13 @@
 # @jswf/redux-module-sample
 
+[![npm version](https://badge.fury.io/js/%40jswf%2Fredux-module.svg)](https://badge.fury.io/js/%40jswf%2Fredux-module)
+
 Make Redux operations modular
 
-- Document
+- Document  
 [https://ttis.croud.jp/?uuid=ed418ee1-730b-40d7-b748-f2969d8d430d](https://ttis.croud.jp/?uuid=ed418ee1-730b-40d7-b748-f2969d8d430d)
+
+![screenshot.gif](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/267629/96ada761-04c4-591d-250c-3d8e41b15534.gif)
 
 ## １．Usage
 
@@ -23,7 +27,7 @@ ReactDOM.render(
 );
 ```
 
-### 1.2 Creating a store module
+### 1.2 Creating a store module class
 
 When using TypeScript, the structure of module data can be specified
 defaultState can be omitted, but in that case undefined is returned when data is accepted.
@@ -39,9 +43,6 @@ export class TestModule extends ReduxModule<State> {
   static defaultState: State = {
     msg: "init",
     count: 0,
-    other:{
-      v:123
-    }
   };
 }
 ```
@@ -100,56 +101,169 @@ class _ClassApp extends Component {
 const ClassApp = mapConnect(_ClassApp, TestModule);
 ```
 
-### 1.5 Sample
+### 1.5 Reference another class
 
 ```ts
-import React from "react";
+export interface TestState2 {
+  text: string;
+}
+export class TestModule2 extends ReduxModule<TestState2> {
+  static includes = [TestModule]; //Declare the external class used here
+  static defaultState: TestState2 = {
+    text:"A"
+  };
+  getMessage() {
+    //Call external class with getModule
+    return this.getModule(TestModule).getState("msg");
+  }
+  setMessage(msg: string) {
+    this.getModule(TestModule).setState({ msg });
+  }
+  getCount() {
+    return this.getModule(TestModule).getState("count")!;
+  }
+  setCount(count: number) {
+    this.getModule(TestModule).setState({ count });
+  }
+  addText() {
+    return this.setState(this.getText()+"a","text")!;
+  }
+  getText() {
+    return this.getState("text")!;
+  }
+}
+```
+
+### 1.6 Write only attribute
+
+ If you use the ReduxModule inheritance class in the component without specifying it, side effects will occur whenever the data under class management is updated.
+
+ If it is used only for writing, useless processing will occur. In that case, it can be avoided by attaching the writeOnly attribute.
+
+- For Function components (Hooks)  
+Set the third argument of useModule to true
+
+```ts
+const testModule = useModule(TestModule,undefined,true);
+```
+
+- For Class component  
+Set the writeOnly attribute to true at the time of mapConnect
+
+```ts
+const ClassApp = mapConnect(_ClassApp, [{module:TestModule,writeOnly:true}]);
+```
+
+- For external reference  
+
+```ts
+static includes = [{module:TestModule,writeOnly:true}];
+```
+
+### 1.7 Sample
+
+```tsx
+import React, { Component } from "react";
 import * as ReactDOM from "react-dom";
 import { createStore } from "redux";
 import { Provider } from "react-redux";
-import { ModuleReducer, useModule, ReduxModule } from "@jswf/redux-module";
+import {
+  ModuleReducer,
+  useModule,
+  ReduxModule,
+  mapModule,
+  mapConnect
+} from "@jswf/redux-module";
 
-//Store module data type
-export interface State {
+/**
+ *Data structure definition (when using TypeScript)
+ *
+ * @export
+ * @interface TestState
+ */
+export interface TestState {
   msg: string;
-  count: number;
 }
-export class TestModule extends ReduxModule<State> {
-  //init value
-  static defaultState: State = {
-    msg: "init",
-    count: 0
+/**
+ * Store access class
+ * (Automatically allocate space in the store for each class)
+ * @export
+ * @class TestModule
+ * @extends {ReduxModule<TestState>}
+ */
+export class TestModule extends ReduxModule<TestState> {
+  //Initial value can be set here
+  protected static defaultState: TestState = {
+    msg: "初期値"
   };
+  // It is not always necessary to create the following access methods
+  // getState and setState are public so you can rewrite directly from the outside
+  public getMessage() {
+    return this.getState("msg")!;
+  }
+  public setMessage(msg: string) {
+    this.setState({ msg });
+  }
 }
 
-function App() {
-  //Use modules
-  const module = useModule(TestModule);
-  //Get data
-  const value = module.getState()!;
+/**
+ *Sample for Hooks
+ *
+ * @returns
+ */
+function HooksApp() {
+  // Receive module instance
+  // The limit of the useModule can be used is the same as other hooks
+  const testModule = useModule(TestModule);
+  // The same class can have different areas by attaching a prefix as shown below
+  //const testModule = useModule(TestModule,"Prefix");
   return (
-    <div>
-      <div>AppComponent</div>
-      <button
-        onClick={() => {
-          //Set data
-          module.setState({ msg: "click!", count: value.count + 1 });
-        }}
-      >
-        button
-      </button>
-      <div>{value.msg}</div>
-      <div>{value.count}</div>
-    </div>
+    <>
+      <div>FunctionComponent</div>
+      <input
+        value={testModule.getMessage()}
+        onChange={e => testModule.setMessage(e.target.value)}
+      />
+      <hr />
+    </>
   );
 }
 
-//Store create
-const store = createStore(ModuleReducer);
+/**
+ *Sample for Class
+ *
+ * @class _ClassApp
+ * @extends {Component}
+ */
+class _ClassApp extends Component {
+  render() {
+    // Receive module instance
+    // Note that the name and argument are slightly different from Hooks
+    const testModule = mapModule(this.props, TestModule);
+    return (
+      <>
+        <div>ClassComponent</div>
+        <input
+          value={testModule.getMessage()}
+          onChange={e => testModule.setMessage(e.target.value)}
+        />
+        <hr />
+      </>
+    );
+  }
+}
+// When using class components, map as follows
+// Only modules declared here can be used in classes
+// Multiple modules can be specified in an array
+const ClassApp = mapConnect(_ClassApp, TestModule);
 
+// Associate a dedicated reducer with Redux
+// Can be used with other reducers
+const store = createStore(ModuleReducer);
 ReactDOM.render(
   <Provider store={store}>
-    <App />
+    <HooksApp />
+    <ClassApp />
   </Provider>,
   document.getElementById("root") as HTMLElement
 );
