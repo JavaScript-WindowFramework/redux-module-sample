@@ -12,7 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@jswf/react": "file:../@jswf/react",
+    "@jswf/react": "^0.2.20",
     "@jswf/redux-module": "^0.1.1",
     "@types/styled-components": "^4.1.19",
     "react-dom": "^16.10.1",
